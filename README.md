@@ -1,6 +1,6 @@
 # Lazy Developer
 
-> **Autonomously optimize every aspect of your codebase with a single command: `/lazy-developer`**
+**Autonomously optimize every aspect of your codebase with a single command: `/lazy-developer`**
 
 ## Introduction
 
