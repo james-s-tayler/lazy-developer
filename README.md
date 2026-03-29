@@ -1,6 +1,8 @@
-# Claude Code Skills
+# Lazy Developer
 
-A collection of Claude Code skills by [james-s-tayler](https://github.com/james-s-tayler).
+Autonomously optimize every aspect of your codebase.
+
+Automate yourself out of a job by using Claude Code to perform multiple rounds of [autoresearch](https://github.com/jmilinovich/goal-md) in a [Ralph Wiggum Loop](https://github.com/snarktank/ralph) using the [GOAL.md](https://github.com/jmilinovich/goal-md) against a prioritized set of goals. First make the code safe to work with by increasing test coverage, then make it fast to work with by reducing build and test times, then make it nice to work with by improving code quality, then make it performant. Because that's just where we're at on the timeline...
 
 ## Installation
 
