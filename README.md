@@ -89,3 +89,11 @@ Orchestrates autoresearch across a configurable sequence of optimization goals. 
 ```
 /lazy-developer
 ```
+
+## Too lazy to install this yourself?
+
+Just paste this into Claude Code and let it do everything for you:
+
+```
+Install the lazy-developer skill from the james-s-tayler marketplace, then run /lazy-developer in ralph mode on this repo.
+```
