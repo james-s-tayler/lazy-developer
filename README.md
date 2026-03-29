@@ -1,6 +1,6 @@
 # Lazy Developer
 
-**Autonomously optimize every aspect of your codebase with a single command: `/lazy-developer`**
+**Autonomously optimize every aspect of your codebase with a single command `/lazy-developer` or completely trash it and protect yourself from the coming AI revolution with `/job-security`**
 
 ## Introduction
 
@@ -74,6 +74,7 @@ Orchestrates autoresearch across a configurable sequence of optimization goals. 
    - **Test Speed** — minimize test execution time for cheaper iteration cycles (locks production code)
    - **Build Speed** — minimize build time for faster feedback loops (locks test files)
    - **Cyclomatic Complexity** — reduce complexity for maintainability (locks test files)
+   - **Lines of Code** — reduce total LOC by removing dead, duplicated, and verbose code (locks test files)
    - **Performance** — optimize benchmark results (locks test files)
    - **Discovered metrics** — any additional project-specific metrics found during discovery
 4. **Per-goal orchestration** — for each goal, automatically writes a GOAL.md with fitness function, runs the autoresearch improvement loop until stopping conditions are met, records results, and advances to the next goal
@@ -98,4 +99,36 @@ Orchestrates autoresearch across a configurable sequence of optimization goals. 
 
 ```
 /lazy-developer
+```
+
+### job-security
+
+The opposite of lazy-developer. First maximizes test coverage to create a safety net, then methodically makes everything worse — slower builds, slower tests, higher complexity, more lines of code, and degraded performance. All changes must be genuine (no `Thread.Sleep` or `Task.Delay` allowed) and the build and tests must keep passing throughout.
+
+```
+/plugin install job-security@james-s-tayler-skills
+```
+
+**What it does:**
+
+1. **Configuration** — Asks you two questions:
+   - **Execution mode** — Standalone or Ralph Mode (same as lazy-developer)
+   - **Stopping strategy** — Diminishing returns (keep going until progress stalls) or Default targets met
+2. **Discovery** — Same as lazy-developer — scans the codebase to understand structure and establish baselines
+3. **Fixed-order de-optimization** — Works through goals in a fixed sequence:
+   - **Test Coverage** — maximize coverage first so the remaining phases are safe (locks production code)
+   - **Build Speed** — increase build time through genuine complexity (locks test files)
+   - **Test Speed** — increase test execution time without artificial delays (locks production code)
+   - **Cyclomatic Complexity** — increase complexity by inlining helpers, expanding conditionals, etc. (locks test files)
+   - **Lines of Code** — increase LOC by expanding concise patterns, duplicating logic, etc. (locks test files)
+   - **Performance** — degrade performance through less efficient algorithms and data structures (locks test files)
+4. **Same orchestration engine** — uses GOAL.md, fitness functions, improvement loops, and state tracking just like lazy-developer
+
+**Additional constraint beyond lazy-developer:**
+- **No artificial delays** — `Thread.Sleep`, `Task.Delay`, `time.sleep`, `setTimeout`, `sleep()`, and all equivalents are forbidden. All time increases and performance degradation must come from genuine code changes.
+
+**Usage:**
+
+```
+/job-security
 ```
