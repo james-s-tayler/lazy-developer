@@ -9,6 +9,12 @@
       "source": "./",
       "version": "1.0.0",
       "description": "Set up autonomous goal-driven optimization — creates a GOAL.md fitness function and runs an improvement loop"
+    },
+    {
+      "name": "lazy-developer",
+      "source": "./",
+      "version": "1.0.0",
+      "description": "Orchestrates autoresearch across a prioritized sequence of optimization goals — with configurable phase order and optional ralph-driven execution"
     }
   ]
 }

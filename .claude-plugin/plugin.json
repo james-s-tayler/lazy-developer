@@ -1,7 +1,7 @@
 {
-  "name": "autoresearch",
-  "description": "Set up autonomous goal-driven optimization — creates a GOAL.md fitness function and runs an improvement loop",
-  "version": "1.0.0",
+  "name": "skills",
+  "description": "A collection of Claude Code skills — autonomous optimization, multi-goal orchestration, and more",
+  "version": "1.1.0",
   "author": {
     "name": "James S Tayler"
   },

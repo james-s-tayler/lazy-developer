@@ -40,3 +40,50 @@ Set up autonomous goal-driven optimization on any repo. Based on the [GOAL.md](h
 ```
 /autoresearch
 ```
+
+### lazy-developer
+
+Orchestrates autoresearch across a configurable sequence of optimization goals. You choose the phase priority and execution mode, and it handles the rest — writing GOAL.md files, running improvement loops, and tracking state across phases.
+
+```
+/plugin install lazy-developer@james-s-tayler-skills
+```
+
+**What it does:**
+
+1. **Configuration** — Asks you two questions before starting:
+   - **Phase order** — Safety First (coverage first), Speed First (build/test speed first), Clean Code First (complexity first), or Custom
+   - **Execution mode** — Standalone (runs everything in one session) or Ralph Mode (generates artifacts for [ralph](https://github.com/snarktank/ralph) to drive each phase as a separate AI instance)
+2. **Discovery** — Scans the target codebase to understand its structure, tools, test framework, build system, and all measurable metrics
+3. **Sequential optimization** — Works through goals in the chosen order:
+   - **Test Coverage** — maximize coverage to make the codebase safer to modify (locks production code)
+   - **Test Speed** — minimize test execution time for cheaper iteration cycles (locks production code)
+   - **Build Speed** — minimize build time for faster feedback loops (locks test files)
+   - **Cyclomatic Complexity** — reduce complexity for maintainability (locks test files)
+   - **Performance** — optimize benchmark results (locks test files)
+   - **Discovered metrics** — any additional project-specific metrics found during discovery
+4. **Per-goal orchestration** — for each goal, automatically writes a GOAL.md with fitness function, runs the autoresearch improvement loop until stopping conditions are met, records results, and advances to the next goal
+5. **State persistence** — tracks progress in `LAZY-DEV-STATE.md` so it can resume if interrupted
+
+**Engineering constraints enforced across all phases:**
+- Build must always pass
+- All tests must always pass
+- Tests can never be deleted
+- File locking by phase (test phases lock prod code, prod phases lock test files)
+- Each change committed individually with clear messages
+- Regressions are reverted immediately
+
+**Execution modes:**
+
+| Mode | How it works |
+|------|-------------|
+| **Ralph Mode** (recommended) | After discovery, generates `prd.json`, `.lazy-developer/CLAUDE.md`, and `progress.txt`, then stops. You run [`ralph.sh`](https://github.com/snarktank/ralph) to execute each phase as a fresh AI instance. If ralph isn't installed, lazy-developer offers to download and set it up for you. Best for long-running optimizations or when you want to review between phases. |
+| **Standalone** | Runs all phases continuously in a single session. |
+
+**Usage:**
+
+```
+/lazy-developer
+/lazy-developer path/to/specific/repo
+/lazy-developer focus on API performance
+```
