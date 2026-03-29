@@ -8,10 +8,12 @@ Automate yourself out of a job by using Claude Code to perform multiple rounds o
 
 ## Too lazy to install this yourself?
 
-Just paste this into Claude Code and let it do everything for you:
+It's hard work being a code monkey. Have Claude do it:
 
 ```
-Install the lazy-developer skill from the james-s-tayler marketplace, then run /lazy-developer in ralph mode on this repo.
+Claude, what's happening?
+If I could get you to go ahead and take a look at https://github.com/james-s-tayler/lazy-developer
+and use it to automate myself out of a job? That'd be great. 
 ```
 
 ## Installation
