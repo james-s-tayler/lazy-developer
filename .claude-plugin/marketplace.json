@@ -15,6 +15,12 @@
       "source": "./",
       "version": "1.0.0",
       "description": "Orchestrates autoresearch across a prioritized sequence of optimization goals — with configurable phase order and optional ralph-driven execution"
+    },
+    {
+      "name": "job-security",
+      "source": "./",
+      "version": "1.0.0",
+      "description": "Maximizes test coverage for safety, then methodically increases build time, test time, complexity, LOC, and degrades performance"
     }
   ]
 }
