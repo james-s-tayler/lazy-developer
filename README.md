@@ -1,6 +1,6 @@
 # Lazy Developer
 
-**Autonomously optimize every aspect of your codebase with a single command `/lazy-developer` or completely trash it and protect yourself from the coming AI revolution with `/job-security`**
+**Autonomously optimize every aspect of your codebase with a single command `/lazy-developer` or completely trash it and protect yourself from the coming AI job losses with `/job-security`**
 
 ## Introduction
 
