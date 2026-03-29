@@ -4,7 +4,7 @@
 
 ## Introduction
 
-Automate yourself out of a job by using Claude Code to perform multiple rounds of [autoresearch](https://github.com/jmilinovich/goal-md) in a [Ralph Wiggum Loop](https://github.com/snarktank/ralph) using the [GOAL.md](https://github.com/jmilinovich/goal-md) pattern against a prioritized set of goals. First make the code safe to work with by increasing test coverage, then make it fast to work with by reducing build and test times, then make it nice to work with by improving code quality, then make it performant. Because that's just where we're at on the timeline...
+Automate yourself out of a job by using Claude Code to perform multiple rounds of [autoresearch](https://github.com/alvinunreal/awesome-autoresearch) in a [Ralph Wiggum Loop](https://github.com/snarktank/ralph) using the [GOAL.md](https://github.com/jmilinovich/goal-md) pattern against a prioritized set of goals. First make the code safe to work with by increasing test coverage, then make it fast to work with by reducing build and test times, then make it nice to work with by improving code quality, then make it performant. Because that's just where we're at on the timeline...
 
 ## Installation
 
