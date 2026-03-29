@@ -6,6 +6,14 @@
 
 Automate yourself out of a job by using Claude Code to perform multiple rounds of [autoresearch](https://github.com/alvinunreal/awesome-autoresearch) in a [Ralph Wiggum Loop](https://github.com/snarktank/ralph) using the [GOAL.md](https://github.com/jmilinovich/goal-md) pattern against a prioritized set of goals. First make the code safe to work with by increasing test coverage, then make it fast to work with by reducing build and test times, then make it nice to work with by improving code quality, then make it performant. All while you sleep. Because that's just where we're at on the timeline...
 
+## Too lazy to install this yourself?
+
+Just paste this into Claude Code and let it do everything for you:
+
+```
+Install the lazy-developer skill from the james-s-tayler marketplace, then run /lazy-developer in ralph mode on this repo.
+```
+
 ## Installation
 
 Add this marketplace to Claude Code:
@@ -88,12 +96,4 @@ Orchestrates autoresearch across a configurable sequence of optimization goals. 
 
 ```
 /lazy-developer
-```
-
-## Too lazy to install this yourself?
-
-Just paste this into Claude Code and let it do everything for you:
-
-```
-Install the lazy-developer skill from the james-s-tayler marketplace, then run /lazy-developer in ralph mode on this repo.
 ```
