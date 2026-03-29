@@ -88,6 +88,4 @@ Orchestrates autoresearch across a configurable sequence of optimization goals. 
 
 ```
 /lazy-developer
-/lazy-developer path/to/specific/repo
-/lazy-developer focus on API performance
 ```
