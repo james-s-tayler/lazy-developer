@@ -11,7 +11,7 @@ Automate yourself out of a job by using Claude Code to perform multiple rounds o
 It's hard work being a code monkey. Have Claude do it:
 
 ```
-Claude, what's happening?
+Hey Claude, what's happening?
 If I could get you to go ahead and take a look at https://github.com/james-s-tayler/lazy-developer
 and use it to automate myself out of a job? That'd be great. 
 ```
