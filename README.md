@@ -101,6 +101,51 @@ Orchestrates autoresearch across a configurable sequence of optimization goals. 
 /lazy-developer
 ```
 
+**Example run — [reactiveui/refit](https://github.com/reactiveui/refit):**
+
+Refit is a mature .NET REST library with Roslyn source generators, 547 xUnit tests, and multi-target builds (net462, netstandard2.0, net8.0, net9.0, net10.0). Here's what lazy-developer achieved running in Ralph Mode overnight:
+
+```
+Discovery (Phase 0)
+├── Languages: C# (.NET 8/9/10, .NET Standard 2.0, .NET 4.6.2)
+├── Build: dotnet build Refit.sln --no-incremental -c Release (~14.6s)
+├── Test: 501 tests + 46 generator tests (~7.7s full suite)
+├── Coverage: 65.14% line, 59.56% branch
+├── Complexity: 2.98 avg CC, 7 functions with CC>15, max CC=37
+└── Baselines recorded, 5 phases planned
+
+Test Speed (Phase 2)
+├── Baseline: 9.85s
+├── Final: 2.0s (79.7% improvement)
+├── Parallel execution of both test projects (9.85s → 6.50s)
+├── Direct vstest invocation on pre-built assemblies (6.50s → 2.0s)
+└── Key insight: dotnet test has ~4s startup overhead — dotnet vstest skips it
+
+Build Speed (Phase 3)
+├── Baseline: 12.50s
+├── Final: 6.50s (48.0% improvement)
+├── Disabled analyzers during Release builds (~40% win alone)
+├── Reduced test TFMs to net9.0 for non-CI builds (~22% additional)
+└── Key insight: AllEnabledByDefault analyzer mode is extremely expensive
+
+Cyclomatic Complexity (Phase 4)
+├── Baseline: 3.0 avg CC, 7 functions with CC>15
+├── Final: 2.8 avg CC, 0 functions with CC>15
+├── RestMethodInfoInternal ctor: CC 37→14
+├── BuildRequestFactoryForMethod: CC 33→8
+├── BuildCancellableTaskFuncForMethod: CC 21→10
+├── FormValueMultimap: CC 20→5
+└── All hotspots >CC 15 eliminated via method extraction
+
+Performance (Phase 5)
+├── Baseline: 3666.17 ns
+├── Final: 2279.93 ns (37.8% improvement)
+├── Eliminated DynamicInvoke with strongly-typed delegates
+├── Cached reflection in BuildQueryMap (ConcurrentDictionary)
+├── Skipped UriBuilder for routes without hardcoded query strings
+└── Replaced LINQ operations with direct loops and index lookups
+```
+
 ### job-security
 
 The opposite of lazy-developer. First maximizes test coverage to create a safety net, then methodically makes everything worse — slower builds, slower tests, higher complexity, more lines of code, and degraded performance. All changes must be genuine (no `Thread.Sleep` or `Task.Delay` allowed) and the build and tests must keep passing throughout.
