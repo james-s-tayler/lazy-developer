@@ -32,6 +32,14 @@ The following phases are available. The user selects the order in Step 1.
 
 Additional metrics discovered during Phase 0 (Discovery) are appended after the selected phases.
 
+### Post-Pipeline Extensions
+
+These optional passes run after all core phases complete but before the completion report. They are structurally different from numbered phases (per-dependency rather than per-metric) and reuse the core optimization engine internally. Configure in Step 1d.
+
+| Extension | What It Does | When It Runs |
+|-----------|-------------|--------------|
+| Dependency Optimization | Vendors direct dependencies, optimizes them using configured phases, keeps only if main repo metrics improve | After all core phases, before Step 4 (Completion Report) |
+
 ## Global Engineering Constraints
 
 These constraints are enforced across ALL phases. They are non-negotiable and must be included in every GOAL.md's Constraints section:
@@ -44,6 +52,7 @@ These constraints are enforced across ALL phases. They are non-negotiable and mu
 6. **Atomic commits** — each optimization step gets its own commit with format `[S:NN->NN] component: what changed`
 7. **Revert on regression** — if a change causes build failure, test failure, or score regression, `git revert` immediately before proceeding
 8. **State file updates** — `LAZY-DEV-STATE.md` must be updated after each phase completes
+9. **Dependency isolation** — when optimizing an inlined dependency, only files within that dependency's vendor directory (`.lazy-developer/vendor/<dep>/`) may be modified. Main repo source, tests, and config remain locked.
 
 ### Per-Phase File Locking
 
@@ -55,6 +64,7 @@ These constraints are enforced across ALL phases. They are non-negotiable and mu
 | Cyclomatic Complexity | Test files | All production/source code |
 | Lines of Code | Test files | All production/source code |
 | Performance | Test files | All production/source code, benchmark files |
+| Dep Optimization | All main repo files (source, test, config) | Files within `.lazy-developer/vendor/<dep>/` only |
 
 ## Step 0: Learn the GOAL.md Pattern
 
@@ -174,6 +184,62 @@ Record all choices. They determine:
 - Whether to stop after discovery (ralph) or continue executing phases (standalone)
 - When each phase considers itself "done"
 
+### 1d. Configure Dependency Optimization
+
+Use `AskUserQuestion` with the following parameters:
+
+```
+questions:
+  - question: "Should lazy-developer also optimize your dependencies?"
+    header: "Dep optimize"
+    multiSelect: false
+    options:
+      - label: "Skip (Recommended)"
+        description: "Only optimize the main codebase. Dependencies are left as-is."
+      - label: "Enable — shallow"
+        description: "Optimize direct dependencies only (depth 1). Vendors each dep, runs selected phases, keeps only if main repo metrics improve."
+      - label: "Enable — recursive"
+        description: "Optimize deps and their deps (depth 2). More thorough but significantly slower."
+      - label: "Custom depth"
+        description: "You specify the dependency depth (1–5)."
+```
+
+If the user selects **Custom depth**, parse their input as an integer between 1 and 5. If invalid, default to 1.
+
+If the user selected any option other than **Skip**, ask two follow-up questions:
+
+```
+questions:
+  - question: "Which optimization phases should run on each dependency?"
+    header: "Dep phases"
+    multiSelect: false
+    options:
+      - label: "LOC + Performance (Recommended)"
+        description: "Run Lines of Code and Performance phases on each dep. Good balance of impact and speed."
+      - label: "All applicable"
+        description: "Run every phase that was configured for the main repo. Thorough but slow per dependency."
+      - label: "LOC only"
+        description: "Only reduce lines of code in dependencies. Fast, often effective at reducing bloat."
+      - label: "Performance only"
+        description: "Only optimize hot paths in dependencies. Best when dep performance is the bottleneck."
+```
+
+```
+questions:
+  - question: "Which dependencies should be targeted?"
+    header: "Dep targets"
+    multiSelect: false
+    options:
+      - label: "All with accessible source (Recommended)"
+        description: "Automatically discover and optimize all dependencies that have public source repos."
+      - label: "Let me pick"
+        description: "You specify which packages to target by name."
+```
+
+If the user selects **Let me pick**, prompt them to list specific package names (comma-separated or one per line). Only those packages will be included in the dependency inventory.
+
+Record the dependency optimization configuration: enabled/disabled, depth, phases, and target selection.
+
 ## Step 2: Discovery (Phase 0)
 
 Scan the target repository to build a complete understanding.
@@ -244,7 +310,20 @@ Write `LAZY-DEV-STATE.md` in the repository root with the following structure. U
 ## Phase Log
 
 (Entries added as each phase completes)
+
+## Dependency Optimization
+- Enabled: [yes/no]
+- Depth: [N or "n/a"]
+- Dep phases: [comma-separated list or "n/a"]
+- Status: [pending/in-progress/completed/skipped]
+
+### Dependency Inventory
+| # | Dependency | Version | Ecosystem | Source URL | Status | Main Repo Impact |
+|---|------------|---------|-----------|------------|--------|------------------|
+(Populated in Step 2f if dependency optimization is enabled)
 ```
+
+Include the `## Dependency Optimization` section in the template only if the user enabled dependency optimization in Step 1d. If not enabled, omit it entirely.
 
 ### 2d. Applicability Check
 
@@ -258,6 +337,59 @@ For each of the 6 core phases, verify the codebase supports it:
 - **Performance**: Are there benchmarks, or can meaningful ones be created?
 
 If a phase is not applicable, mark it as `skipped` in the state file with a reason. Preserve the user's chosen ordering for all remaining applicable phases.
+
+### 2f. Dependency Discovery
+
+**This sub-step only runs if the user enabled dependency optimization in Step 1d. Otherwise skip to Step 2e (Ralph Mode) or Step 3 (Standalone Mode).**
+
+#### Ecosystem Detection
+
+Identify the dependency inline mechanism based on the project's package manifest:
+
+| Manifest File | Ecosystem | Inline Mechanism |
+|---------------|-----------|------------------|
+| `package.json` | npm/yarn/pnpm | `"dep": "file:.lazy-developer/vendor/dep"` |
+| `go.mod` | Go | `replace module => ./.lazy-developer/vendor/dep` |
+| `pyproject.toml` / `requirements.txt` | Python | `-e ./.lazy-developer/vendor/dep` or path dependency |
+| `*.csproj` / `*.sln` | .NET | `<ProjectReference>` replacing `<PackageReference>` |
+| `Cargo.toml` | Rust | `[patch.crates-io] dep = { path = "..." }` |
+
+#### Dependency Enumeration
+
+For each direct dependency (up to the configured depth from Step 1d-i):
+
+1. List all direct dependencies from the manifest file
+2. For each dependency, find the source repository URL via package registry metadata:
+   - npm: `npm view <pkg> repository.url`
+   - Go: module path maps directly to repository URL
+   - Python: `pip show <pkg>` → Home-page, or PyPI JSON API
+   - .NET: NuGet API → `projectUrl` or `repository` field
+   - Rust: `cargo info <pkg>` or crates.io API → `repository` field
+3. Classify each dependency:
+   - **source-available**: has a public source repository that can be cloned
+   - **source-unavailable**: no accessible source (binary-only, private, etc.)
+   - **monorepo sub-package**: source is part of a larger monorepo (requires sparse checkout or full clone)
+
+#### State Update
+
+Add a `## Dependency Optimization` section to `LAZY-DEV-STATE.md`:
+
+```markdown
+## Dependency Optimization
+- Enabled: yes
+- Depth: [N]
+- Dep phases: [comma-separated list from Step 1d-ii]
+- Target deps: [all | specific list from Step 1d-iii]
+- Status: pending
+
+### Dependency Inventory
+| # | Dependency | Version | Ecosystem | Source URL | Classification | Status | Main Repo Impact |
+|---|------------|---------|-----------|------------|----------------|--------|------------------|
+| 1 | [dep name] | [version] | [ecosystem] | [url or "n/a"] | [source-available/unavailable/monorepo] | pending | — |
+| ... | ... | ... | ... | ... | ... | ... | ... |
+```
+
+Only include dependencies that are source-available (or monorepo sub-packages) and match the user's target selection from Step 1d-iii. Dependencies classified as source-unavailable are excluded from the inventory with a note.
 
 ### 2e. Ralph Mode: Generate Artifacts and Stop
 
@@ -328,6 +460,16 @@ Assign `priority` values sequentially (1 = discovery which is already done, 2 = 
 
 Use the phase-specific details from the "Execute Optimization Phases" section below (Phase 1-5 specs) for the metric, direction, fitness function, constraints, stopping conditions, and action catalog for each story.
 
+**Dependency optimization stories** (if enabled in Step 1d): After all core phase stories, add one user story per dependency from the dependency inventory. Each dependency story is self-contained with:
+- Clone instructions (URL, tag, destination path)
+- Inline mechanism for the dependency's ecosystem
+- Which phases to run on the dependency (from Step 1d-ii)
+- Oracle evaluation criteria (run main repo fitness functions, keep if ≥1 metric improved ≥0.5% and none regressed >1%)
+- Keep/revert logic and state file update instructions
+- File locking: only `.lazy-developer/vendor/<dep>/` is editable, all main repo files are locked
+- The first dependency story must also include instructions to establish the main repo oracle (run all fitness functions, save to `dep-oracle.json`)
+- Each subsequent dependency story must read the oracle from `dep-oracle.json` and update it if the dependency is kept
+
 #### Artifact 2: `.lazy-developer/CLAUDE.md` + root CLAUDE.md reference
 
 Create `.lazy-developer/CLAUDE.md` with persistent instructions for every ralph instance:
@@ -392,10 +534,28 @@ For each optimization phase, follow this loop:
 | Cyclomatic Complexity | Test files | All production/source code |
 | Lines of Code | Test files | All production/source code |
 | Performance | Test files | All production/source code, benchmark files |
+| Dep Optimization | All main repo files (source, test, config) | Files within `.lazy-developer/vendor/<dep>/` only |
 
 ## Resumption
 
 If a phase was partially completed (GOAL.md exists, some iterations in iterations.jsonl), continue the improvement loop from the current state rather than restarting. Check the last entry in iterations.jsonl for the most recent score.
+
+## Dependency Optimization Protocol
+
+When processing a dependency optimization story:
+
+1. Read `dep-oracle.json` for the main repo baseline scores (or establish the oracle if this is the first dep story)
+2. Clone and vendor the dependency into `.lazy-developer/vendor/<dep>/`
+3. Inline the dependency using the ecosystem-specific mechanism in the story description
+4. Verify the main repo still builds and tests pass with the inlined dependency
+5. Run the configured optimization phases on the vendored dependency only
+   - File locking: ONLY files within `.lazy-developer/vendor/<dep>/` may be modified
+   - After each change, verify main repo build + tests still pass
+   - Commit format: `[S:NN->NN] dep/<dep>: what changed`
+   - Max 10 iterations per phase
+6. After optimization, re-run all main repo fitness functions
+7. **Keep** if ≥1 metric improved ≥0.5% and none regressed >1% — update `dep-oracle.json`
+8. **Revert** otherwise — remove vendor dir, restore package manifest, run verify command
 
 ## progress.txt Format
 
@@ -600,6 +760,79 @@ When a phase's stopping conditions are met:
 5. Commit: `git add -A && git commit -m "lazy-dev: Phase N complete — [metric] [baseline] -> [final] ([delta]%)"`
 6. Proceed to Step 3a for the next phase
 
+## Step 3.5: Dependency Optimization Pass (Standalone Mode Only)
+
+**This step only runs in Standalone mode if dependency optimization was enabled in Step 1d. In Ralph mode, dependency optimization is handled via dedicated user stories generated in Step 2e. Skip to Step 4 if not enabled.**
+
+After all core phases complete, this pass vendors direct dependencies, optimizes them using the same autoresearch engine, and keeps the optimized versions only if the main repo's metrics actually improve.
+
+### 3.5a. Establish Main Repo Oracle
+
+1. Run ALL fitness functions from every completed phase (coverage, test speed, build speed, complexity, LOC, performance — whichever were not skipped)
+2. Save the scores to `.lazy-developer/dep-oracle.json`:
+   ```json
+   {
+     "timestamp": "<ISO 8601>",
+     "scores": {
+       "coverage": {"score": 87.3, "unit": "%"},
+       "test_speed": {"score": 12.4, "unit": "seconds"},
+       "loc": {"score": 4200, "unit": "lines"}
+     }
+   }
+   ```
+3. This is the acceptance criterion — a dependency optimization is only kept if it **improves** at least one main repo metric (≥0.5% improvement) and **regresses none** (>1% tolerance)
+
+### 3.5b. Process Each Dependency
+
+Process dependencies one at a time, in the order listed in the `LAZY-DEV-STATE.md` dependency inventory.
+
+For each dependency, execute these sub-steps:
+
+**1. Clone & vendor:**
+```bash
+git clone --depth 1 --branch <tag> <source_url> .lazy-developer/vendor/<dep>/
+```
+
+**2. Inline:** Replace the package manager reference with a local path using the ecosystem-specific mechanism:
+
+| Ecosystem | Inline Mechanism | Verify Command |
+|-----------|-----------------|----------------|
+| npm/yarn/pnpm | `"dep": "file:.lazy-developer/vendor/dep"` in package.json | `npm install` |
+| Go | `replace module => ./.lazy-developer/vendor/dep` in go.mod | `go mod tidy` |
+| Python (pip) | `-e ./.lazy-developer/vendor/dep` in requirements or path dependency in pyproject.toml | `pip install -e .` |
+| .NET | `<ProjectReference Include="...">` replacing `<PackageReference>` | `dotnet restore` |
+| Rust (Cargo) | `[patch.crates-io] dep = { path = ".lazy-developer/vendor/dep" }` in Cargo.toml | `cargo update` |
+
+**3. Verify baseline:** Run the build, run the tests, and run all fitness functions. Scores must be within 2% of the oracle values. If verification fails → skip this dependency, revert the inline change, log as `skipped — baseline verification failed`.
+
+**4. Optimize:** For each configured phase (from Step 1d-ii), write a dep-scoped GOAL.md where:
+- The **inner fitness function** measures the dep's own metric (e.g., LOC within `.lazy-developer/vendor/<dep>/`)
+- **Global constraints** use the MAIN repo's build and test commands — every dep change must keep the main repo green
+- **File locking** restricts edits to `.lazy-developer/vendor/<dep>/` only — main repo source, tests, and config are locked
+- **Max 10 iterations** per dependency per phase to bound time
+- **Commit format:** `[S:NN->NN] dep/<dep>: what changed`
+
+Run the improvement loop (measure → diagnose → act → verify → commit/revert) for each phase, then archive the GOAL.md and iterations.jsonl to `.lazy-developer/dep-optimization-archive/<dep>/`.
+
+**5. Evaluate against oracle:** After all configured phases complete for this dependency, re-run ALL main repo fitness functions. Apply the acceptance criterion:
+- **Keep** if ≥1 metric improved ≥0.5% AND no metric regressed >1%
+- **Revert** otherwise — remove the vendor directory, restore the original package manager reference, and run the verify command to restore original state
+
+**6. Update oracle:** If the dependency's optimizations are kept, the new scores become the baseline for evaluating subsequent dependencies. Update `dep-oracle.json` with the new scores.
+
+**7. Recurse** (if depth > 1): Read the kept dependency's own manifest file. For each of its direct dependencies, repeat the entire cycle (clone, inline, verify, optimize, evaluate) with depth decremented by 1. Sub-dependencies are vendored into `.lazy-developer/vendor/<dep>/vendor/<sub-dep>/`. The main repo oracle is still the acceptance judge — sub-dep changes must improve (or not regress) the main repo.
+
+**8. Update state:** Mark the dependency as `kept`, `reverted`, or `skipped` in `LAZY-DEV-STATE.md` with the main repo impact deltas.
+
+### 3.5c. Completion
+
+1. Run all main repo fitness functions one final time
+2. Update `LAZY-DEV-STATE.md` with the dependency results summary:
+   - Total dependencies processed, kept, reverted, skipped
+   - Per-dependency status and main repo impact deltas
+3. Archive all vendor artifacts to `.lazy-developer/dep-optimization-archive/`
+4. Commit: `git add -A && git commit -m "lazy-dev: Dependency optimization complete — [N] deps processed, [N] kept"`
+
 ## Step 4: Completion Report
 
 After all phases are complete (or all remaining phases are skipped):
@@ -624,6 +857,18 @@ Update `LAZY-DEV-STATE.md` with a final summary section:
 ### Total Commits
 
 [N] optimization commits across all phases.
+
+### Dependency Optimization Results
+
+(Include this section only if dependency optimization was enabled)
+
+| Dependency | Ecosystem | Status | Phases Run | Main Repo Impact |
+|------------|-----------|--------|------------|------------------|
+| [dep name] | [npm/go/...] | kept/reverted/skipped | [list] | [metric deltas] |
+| ... | ... | ... | ... | ... |
+
+**Summary:** [N] dependencies processed, [N] kept, [N] reverted, [N] skipped.
+**Net main repo impact:** [aggregate metric changes from all kept dependencies]
 ```
 
 Commit the final state: `git add -A && git commit -m "lazy-dev: All phases complete — see LAZY-DEV-STATE.md for results"`
@@ -662,6 +907,16 @@ Each fresh ralph instance has no memory of previous instances. Continuity comes 
 5. If the current story's phase was partially completed (GOAL.md exists, iterations.jsonl has entries), continue the loop from the current state rather than restarting
 6. Execute the story, update all state files, commit, and check for overall completion
 
+### Dependency Optimization
+
+If the dependency optimization pass was interrupted:
+
+1. Read `LAZY-DEV-STATE.md` — check the `## Dependency Optimization` section for per-dependency status
+2. If a dependency is marked `in-progress`, check for its vendor directory (`.lazy-developer/vendor/<dep>/`) and any existing GOAL.md or iterations.jsonl within it — resume the optimization loop from the current state
+3. If a dependency is marked `completed` or `reverted`, skip it
+4. Re-establish the main repo oracle from `dep-oracle.json` if it exists, or re-run all fitness functions to regenerate it
+5. Continue processing the next unprocessed dependency in the inventory
+
 This makes both modes resilient to interruptions — progress is never lost.
 
 ## Error Handling
@@ -679,3 +934,11 @@ This makes both modes resilient to interruptions — progress is never lost.
 - **prd.json corrupted or missing:** If `prd.json` cannot be parsed, check git history for the last valid version and restore it. If unrecoverable, report the error and output nothing (ralph.sh will retry on next iteration).
 - **State file conflict:** If `LAZY-DEV-STATE.md` has merge conflicts or inconsistencies, resolve based on `prd.json` as the source of truth for which phases are complete.
 - **Partial phase from previous instance:** If GOAL.md and iterations.jsonl exist but the phase isn't marked complete, the previous instance was interrupted mid-phase. Continue from the last recorded iteration rather than restarting the phase.
+
+### Dependency Optimization Specific
+
+- **Clone failure:** If `git clone` fails for a dependency (private repo, invalid URL, network error), skip that dependency, log it as `skipped — clone failed` in the state file, and continue to the next dependency.
+- **Inline failure:** If the ecosystem-specific inlining mechanism fails (e.g., `npm install` errors after modifying `package.json`), revert the manifest change, skip the dependency with reason `inline failed`, and continue.
+- **Dep optimization stall:** If a dependency's optimization loop stalls (5 consecutive iterations with no improvement across all configured phases), evaluate the current state against the main repo oracle. Keep changes if they pass the oracle threshold, revert otherwise.
+- **Recursive sub-dep failure:** If a sub-dependency (depth > 1) fails to clone, inline, or optimize, skip only that sub-dependency. The parent dependency's optimizations are unaffected.
+- **Disk space >500MB:** If `.lazy-developer/vendor/` exceeds 500MB total, warn the user and stop processing additional dependencies. Evaluate and finalize any in-progress dependency before stopping.
