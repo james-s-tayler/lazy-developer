@@ -79,6 +79,7 @@ Orchestrates autoresearch across a configurable sequence of optimization goals. 
    - **Discovered metrics** — any additional project-specific metrics found during discovery
 4. **Per-goal orchestration** — for each goal, automatically writes a GOAL.md with fitness function, runs the autoresearch improvement loop until stopping conditions are met, records results, and advances to the next goal
 5. **State persistence** — tracks progress in `LAZY-DEV-STATE.md` so it can resume if interrupted
+6. **Recursively improve dependencies (experimental)** - after optimization completes, optionally proceed vendor in direct dependencies and run autoresearch against them to see if doing so improves the current repo. I'm too lazy to actually test this mode myself. YMMV, wildly.
 
 **Engineering constraints enforced across all phases:**
 - Build must always pass
