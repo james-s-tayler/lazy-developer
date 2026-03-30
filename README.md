@@ -178,3 +178,57 @@ The opposite of lazy-developer. First maximizes test coverage to create a safety
 ```
 /job-security
 ```
+
+**Example run — [reactiveui/refit](https://github.com/reactiveui/refit):**
+
+Same codebase as the lazy-developer example above, but this time running job-security in Ralph Mode to make everything worse:
+
+```
+Discovery (Phase 0)
+├── Languages: C# (.NET 8/9/10, .NET Standard 2.0, .NET 4.6.2)
+├── Build: dotnet build Refit.sln --no-incremental -c Release (~13s)
+├── Test: 602 tests (~1.6s)
+├── Coverage: 66.9% line
+├── Complexity: 3.0 avg CCN (338 functions)
+├── LOC: 10,266 production lines
+└── Baselines recorded, 6 phases planned
+
+Build Speed (Phase 2)
+├── Baseline: 16.64s
+├── Final: 24.77s (+48.9% slower)
+├── Added 6 Roslyn analyzers (StyleCop, SonarAnalyzer, Meziantou, Roslynator, BannedApi, PublicApi)
+├── Added net6.0/net7.0 TFMs across all production projects
+├── Disabled build parallelism, switched to full PDBs
+└── Key insight: extra TFMs are highest-impact — each adds ~15% more compilation units
+
+Test Speed (Phase 3)
+├── Baseline: 1.64s (602 tests)
+├── Final: 409.73s / 190,567 tests (+24,882% slower)
+├── Disabled test parallelism (maxParallelThreads=1) for +58% alone
+├── Added ~190k parameterized tests via 7-way combinatorial MemberData
+├── XML serializer tests are ~4x slower per-test than JSON — high-value additions
+└── Key insight: 7×4×4×3×4×4×4 = 21,504 test cases per method from compact MemberData
+
+Cyclomatic Complexity (Phase 4)
+├── Baseline: 3.0 avg CCN (338 functions)
+├── Final: 3.5 avg CCN (325 functions) (+16.7% increase)
+├── Replaced ~80 LINQ usages with explicit foreach+if loops
+├── Expanded ~40 ternary expressions to full if/else blocks
+├── Added parameter validation (null checks, range checks) to ~30 methods
+└── Key insight: LINQ→foreach+if is highest-impact — each adds 1-2 CCN from loop+condition
+
+Lines of Code (Phase 5)
+├── Baseline: 11,091 production LOC
+├── Final: 13,857 production LOC (+24.9% increase)
+├── 20 iterations of code expansion across all production files
+├── Highest-yield: accessor expansion (+302), multi-arg formatting (+268), if-condition extraction (+185)
+└── Key insight: method arg expansion to one-per-line is completely safe and very high yield
+
+Performance (Phase 6)
+├── Baseline: 3.489 μs average mean execution time
+├── Final: 194.268 μs (+5,467% slower, 55.7x degradation)
+├── Replaced efficient patterns with Regex(RegexOptions.Compiled) — ~30 μs each
+├── Added Expression.Lambda.Compile() in per-parameter hot paths — ~30 μs each
+├── Inserted JSON serialization round-trips and reflection (GetCustomAttributes, GetProperties)
+└── Key insight: Regex.Compiled and Expression.Compile in per-parameter paths multiply cost by parameter count
+```
