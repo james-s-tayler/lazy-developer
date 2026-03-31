@@ -21,13 +21,13 @@ and use it to automate myself out of a job? That'd be great.
 Add this marketplace to Claude Code:
 
 ```
-/plugin marketplace add james-s-tayler/skills
+/plugin marketplace add james-s-tayler/lazy-developer
 ```
 
 Then install individual skills:
 
 ```
-/plugin install <skill-name>@james-s-tayler-skills
+/plugin install <skill-name>@james-s-tayler-lazy-developer
 ```
 
 ## Available Skills
@@ -37,7 +37,7 @@ Then install individual skills:
 Set up autonomous goal-driven optimization on any repo. Based on the [GOAL.md](https://github.com/jmilinovich/goal-md) pattern.
 
 ```
-/plugin install autoresearch@james-s-tayler-skills
+/plugin install autoresearch@james-s-tayler-lazy-developer
 ```
 
 **What it does:**
@@ -60,14 +60,16 @@ Set up autonomous goal-driven optimization on any repo. Based on the [GOAL.md](h
 Orchestrates autoresearch across a configurable sequence of optimization goals. You choose the phase priority and execution mode, and it handles the rest — writing GOAL.md files, running improvement loops, and tracking state across phases.
 
 ```
-/plugin install lazy-developer@james-s-tayler-skills
+/plugin install lazy-developer@james-s-tayler-lazy-developer
 ```
 
 **What it does:**
 
-1. **Configuration** — Asks you two questions before starting:
+1. **Configuration** — Asks you four questions before starting:
    - **Phase order** — Safety First (coverage first), Speed First (build/test speed first), Clean Code First (complexity first), or Custom
    - **Execution mode** — Standalone (runs everything in one session) or Ralph Mode (generates artifacts for [ralph](https://github.com/snarktank/ralph) to drive each phase as a separate AI instance)
+   - **Stopping strategy** — Diminishing returns (keep going until progress stalls) or Default targets met
+   - **Dependency optimization** — optionally vendor and optimize direct dependencies, keeping changes only if main repo metrics improve
 2. **Discovery** — Scans the target codebase to understand its structure, tools, test framework, build system, and all measurable metrics
 3. **Sequential optimization** — Works through goals in the chosen order:
    - **Test Coverage** — maximize coverage to make the codebase safer to modify (locks production code)
@@ -152,7 +154,7 @@ Performance (Phase 5)
 The opposite of lazy-developer. First maximizes test coverage to create a safety net, then methodically makes everything worse — slower builds, slower tests, higher complexity, more lines of code, and degraded performance. All changes must be genuine (no `Thread.Sleep` or `Task.Delay` allowed) and the build and tests must keep passing throughout.
 
 ```
-/plugin install job-security@james-s-tayler-skills
+/plugin install job-security@james-s-tayler-lazy-developer
 ```
 
 **What it does:**
