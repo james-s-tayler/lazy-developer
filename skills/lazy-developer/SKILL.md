@@ -82,7 +82,7 @@ Do NOT proceed until you have read the template and at least 2 examples.
 
 ## Step 1: Pipeline Configuration
 
-Before starting discovery, ask the user two quick questions to configure the optimization pipeline.
+Before starting discovery, ask the user a few quick questions to configure the optimization pipeline.
 
 ### 1a. Choose Optimization Order
 
@@ -239,6 +239,35 @@ questions:
 If the user selects **Let me pick**, prompt them to list specific package names (comma-separated or one per line). Only those packages will be included in the dependency inventory.
 
 Record the dependency optimization configuration: enabled/disabled, depth, phases, and target selection.
+
+### 1e. Choose Optimization Intensity
+
+Use `AskUserQuestion` with the following parameters:
+
+```
+questions:
+  - question: "How aggressively should lazy-developer optimize each phase?"
+    header: "Intensity"
+    multiSelect: false
+    options:
+      - label: "Any change is ok"
+        description: "Stop after the first meaningful improvement. Fastest overall — good for a quick win or proof of concept."
+      - label: "Moderate (Recommended)"
+        description: "Use default iteration limits and stall thresholds. Balanced between thoroughness and time."
+      - label: "Aggressive"
+        description: "Push harder — more iterations, stricter stall detection. Extracts maximum improvement but takes significantly longer."
+```
+
+The intensity level scales iteration limits and stall-detection thresholds across all phases:
+
+| Parameter | Any change is ok | Moderate | Aggressive |
+|-----------|-----------------|----------|------------|
+| Max iterations per phase | 5 | 10 | 20 |
+| Stall threshold (consecutive no-improvement iterations) | 1 | 3 | 5 |
+| Target scaling | Default targets reduced by 50% (e.g., 20% LOC reduction becomes 10%) | Default targets as specified | Default targets increased by 50% (e.g., 20% LOC reduction becomes 30%) |
+| Dep optimization max iterations | 3 | 10 | 15 |
+
+When writing GOAL.md files (Step 3b) or generating Ralph stories (Step 2e), apply these scaled values to each phase's stopping conditions and iteration limits. The stall threshold replaces the "N consecutive iterations with < X% improvement" values in the phase specs.
 
 ## Step 2: Discovery (Phase 0)
 

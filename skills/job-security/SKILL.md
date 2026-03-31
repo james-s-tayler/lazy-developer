@@ -63,7 +63,7 @@ Do NOT proceed until you have read the template and at least 2 examples.
 
 ## Step 1: Pipeline Configuration
 
-The phase order is fixed — no selection needed. Only the execution mode needs to be configured.
+The phase order is fixed — no selection needed. Configure the execution mode, stopping strategy, and intensity.
 
 ### 1a. Choose Execution Mode
 
@@ -124,9 +124,38 @@ questions:
 
 If the user selects **Diminishing returns**, use only the stall-detection stopping conditions for each phase. If the user selects **Default targets met**, use only the target-based stopping conditions and stop immediately when the target is reached.
 
+### 1c. Choose De-Optimization Intensity
+
+Use `AskUserQuestion` with the following parameters:
+
+```
+questions:
+  - question: "How aggressively should job-security de-optimize each phase?"
+    header: "Intensity"
+    multiSelect: false
+    options:
+      - label: "Any change is ok"
+        description: "Stop after the first meaningful de-optimization. Fastest overall — good for a quick demonstration."
+      - label: "Moderate (Recommended)"
+        description: "Use default iteration limits and stall thresholds. Balanced between thoroughness and time."
+      - label: "Aggressive"
+        description: "Push harder — more iterations, stricter stall detection. Extracts maximum damage but takes significantly longer."
+```
+
+The intensity level scales iteration limits and stall-detection thresholds across all phases:
+
+| Parameter | Any change is ok | Moderate | Aggressive |
+|-----------|-----------------|----------|------------|
+| Max iterations per phase | 5 | 10 | 20 |
+| Stall threshold (consecutive no-change iterations) | 1 | 3 | 5 |
+| Target scaling | Default targets reduced by 50% (e.g., 100% build time increase becomes 50%) | Default targets as specified | Default targets increased by 50% (e.g., 100% build time increase becomes 150%) |
+
+When writing GOAL.md files (Step 3b) or generating Ralph stories (Step 2e), apply these scaled values to each phase's stopping conditions and iteration limits. The stall threshold replaces the "N consecutive iterations with < X% change" values in the phase specs.
+
 Record all choices. They determine:
 - Whether to stop after discovery (ralph) or continue executing phases (standalone)
 - When each phase considers itself "done"
+- How hard to push each phase before moving on
 
 ## Step 2: Discovery (Phase 0)
 

@@ -65,11 +65,12 @@ Orchestrates autoresearch across a configurable sequence of optimization goals. 
 
 **What it does:**
 
-1. **Configuration** — Asks you four questions before starting:
+1. **Configuration** — Asks you five questions before starting:
    - **Phase order** — Safety First (coverage first), Speed First (build/test speed first), Clean Code First (complexity first), or Custom
    - **Execution mode** — Standalone (runs everything in one session) or Ralph Mode (generates artifacts for [ralph](https://github.com/snarktank/ralph) to drive each phase as a separate AI instance)
    - **Stopping strategy** — Diminishing returns (keep going until progress stalls) or Default targets met
    - **Dependency optimization** — optionally vendor and optimize direct dependencies, keeping changes only if main repo metrics improve
+   - **Intensity** — Any change is ok (quick win), Moderate (balanced), or Aggressive (maximum extraction)
 2. **Discovery** — Scans the target codebase to understand its structure, tools, test framework, build system, and all measurable metrics
 3. **Sequential optimization** — Works through goals in the chosen order:
    - **Test Coverage** — maximize coverage to make the codebase safer to modify (locks production code)
@@ -159,9 +160,10 @@ The opposite of lazy-developer. First maximizes test coverage to create a safety
 
 **What it does:**
 
-1. **Configuration** — Asks you two questions:
+1. **Configuration** — Asks you three questions:
    - **Execution mode** — Standalone or Ralph Mode (same as lazy-developer)
    - **Stopping strategy** — Diminishing returns (keep going until progress stalls) or Default targets met
+   - **Intensity** — Any change is ok (quick demo), Moderate (balanced), or Aggressive (maximum damage)
 2. **Discovery** — Same as lazy-developer — scans the codebase to understand structure and establish baselines
 3. **Fixed-order de-optimization** — Works through goals in a fixed sequence:
    - **Test Coverage** — maximize coverage first so the remaining phases are safe (locks production code)
