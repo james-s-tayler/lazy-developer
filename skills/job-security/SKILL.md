@@ -147,8 +147,8 @@ The intensity level scales iteration limits and stall-detection thresholds acros
 | Parameter | Any change is ok | Moderate | Aggressive |
 |-----------|-----------------|----------|------------|
 | Max iterations per phase | 5 | 10 | 20 |
-| Stall threshold (consecutive no-change iterations) | 1 | 3 | 5 |
-| Target scaling | Default targets reduced by 50% (e.g., 100% build time increase becomes 50%) | Default targets as specified | Default targets increased by 50% (e.g., 100% build time increase becomes 150%) |
+| Stall threshold (consecutive no-change iterations) | 3 | 5 | 7 |
+| Target scaling | 25% of default targets (e.g., 100% build time increase becomes 25%) | 50% of default targets (e.g., 100% build time increase becomes 50%) | 100% of default targets (e.g., 100% build time increase stays 100%) |
 
 When writing GOAL.md files (Step 3b) or generating Ralph stories (Step 2e), apply these scaled values to each phase's stopping conditions and iteration limits. The stall threshold replaces the "N consecutive iterations with < X% change" values in the phase specs.
 
